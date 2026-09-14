@@ -29,10 +29,10 @@ func TestParseAuthorizationHeader(t *testing.T) {
 		{"Basic " + base64.StdEncoding.EncodeToString([]byte("foo:bar")), parsed{BasicAuth: &basic{"foo", "bar"}}, true},
 		{"basic " + base64.StdEncoding.EncodeToString([]byte("foo:bar")), parsed{BasicAuth: &basic{"foo", "bar"}}, true},
 
-		{"token value", parsed{BearerToken: &bearer{"value"}}, true},
-		{"Token value", parsed{BearerToken: &bearer{"value"}}, true},
-		{"bearer value", parsed{BearerToken: &bearer{"value"}}, true},
-		{"Bearer value", parsed{BearerToken: &bearer{"value"}}, true},
+		{"token value", parsed{BearerToken: &bearer{"value", true}}, true},
+		{"Token value", parsed{BearerToken: &bearer{"value", true}}, true},
+		{"bearer value", parsed{BearerToken: &bearer{"value", false}}, true},
+		{"Bearer value", parsed{BearerToken: &bearer{"value", false}}, true},
 		{"Bearer wrong value", parsed{}, false},
 	}
 	for _, c := range cases {

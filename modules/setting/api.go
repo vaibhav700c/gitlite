@@ -19,6 +19,7 @@ var API = struct {
 	DefaultGitTreesPerPage int
 	DefaultMaxBlobSize     int64
 	DefaultMaxResponseSize int64
+	AllowLegacyTokenScheme bool
 }{
 	EnableSwagger:          true,
 	SwaggerURL:             "",
@@ -27,6 +28,7 @@ var API = struct {
 	DefaultGitTreesPerPage: 1000,
 	DefaultMaxBlobSize:     10485760,
 	DefaultMaxResponseSize: 104857600,
+	AllowLegacyTokenScheme: true,
 }
 
 func loadAPIFrom(rootCfg ConfigProvider) {
