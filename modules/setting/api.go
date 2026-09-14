@@ -23,8 +23,8 @@ var API = struct {
 }{
 	EnableSwagger:          true,
 	SwaggerURL:             "",
-	MaxResponseItems:       50,
-	DefaultPagingNum:       30,
+	MaxResponseItems:       25,
+	DefaultPagingNum:       20,
 	DefaultGitTreesPerPage: 1000,
 	DefaultMaxBlobSize:     10485760,
 	DefaultMaxResponseSize: 104857600,
