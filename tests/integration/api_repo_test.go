@@ -45,7 +45,6 @@ func TestAPIUserReposNotLogin(t *testing.T) {
 
 func TestAPISearchRepo(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
-	defer test.MockVariableValue(&setting.API.MaxResponseItems, 50)() // expectations below predate the GitLite maximum of 25
 	const keyword = "test"
 
 	req := NewRequestf(t, "GET", "/api/v1/repos/search?q=%s", keyword)

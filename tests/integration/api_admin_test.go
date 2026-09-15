@@ -108,10 +108,6 @@ func TestAPISudoUserForbidden(t *testing.T) {
 
 func TestAPIListUsers(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
-	// expectations below predate the GitLite paging defaults (20 per page, at most 25)
-	defer test.MockVariableValue(&setting.API.DefaultPagingNum, 30)()
-	defer test.MockVariableValue(&setting.API.MaxResponseItems, 50)()
-
 	adminUsername := "user1"
 	token := getUserToken(t, adminUsername, auth_model.AccessTokenScopeReadAdmin)
 
@@ -280,9 +276,6 @@ func TestAPIRenameUser(t *testing.T) {
 
 func TestAPICron(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
-	// expectations below predate the GitLite paging defaults (20 per page, at most 25)
-	defer test.MockVariableValue(&setting.API.DefaultPagingNum, 30)()
-	defer test.MockVariableValue(&setting.API.MaxResponseItems, 50)()
 
 	// user1 is an admin user
 	session := loginUser(t, "user1")

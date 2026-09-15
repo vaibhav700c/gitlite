@@ -9,7 +9,6 @@ import (
 	"errors"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	actions_model "gitea.dev/models/actions"
@@ -25,14 +24,6 @@ import (
 )
 
 var _ Method = &OAuth2{}
-
-const (
-	legacyTokenSchemeSunset   = "Wed, 01 Apr 2026 00:00:00 GMT"
-	legacyTokenSchemeWarning  = `299 - "The 'token' authorization scheme is deprecated; use 'Authorization: Bearer <token>'"`
-	legacyTokenSchemeDisabled = "the 'token' authorization scheme is disabled; use 'Authorization: Bearer <token>'"
-)
-
-var legacyTokenSchemeWarnedAt sync.Map // user ID -> time.Time, keeps the log warning to once per minute per user
 
 // GetOAuthAccessTokenScopeAndUserID returns access token scope and user id
 func GetOAuthAccessTokenScopeAndUserID(ctx context.Context, accessToken string) (auth_model.AccessTokenScope, int64) {
@@ -87,18 +78,18 @@ func (o *OAuth2) Name() string {
 	return "oauth2"
 }
 
-// parseToken returns the token from request, whether it was sent with the deprecated
-// "token" authorization scheme, and whether the token exists or not
-func parseToken(req *http.Request) (token string, legacyScheme, ok bool) {
+// parseToken returns the token from request, and a boolean value
+// representing whether the token exists or not
+func parseToken(req *http.Request) (string, bool) {
 	_ = req.ParseForm()
 	if !setting.DisableQueryAuthToken {
 		// Check token.
 		if token := req.Form.Get("token"); token != "" {
-			return token, false, true
+			return token, true
 		}
 		// Check access token.
 		if token := req.Form.Get("access_token"); token != "" {
-			return token, false, true
+			return token, true
 		}
 	} else if req.Form.Get("token") != "" || req.Form.Get("access_token") != "" {
 		log.Warn("API token sent in query string but DISABLE_QUERY_AUTH_TOKEN=true")
@@ -108,10 +99,10 @@ func parseToken(req *http.Request) (token string, legacyScheme, ok bool) {
 	if auHead := req.Header.Get("Authorization"); auHead != "" {
 		parsed, ok := httpauth.ParseAuthorizationHeader(auHead)
 		if ok && parsed.BearerToken != nil {
-			return parsed.BearerToken.Token, parsed.BearerToken.IsLegacyScheme, true
+			return parsed.BearerToken.Token, true
 		}
 	}
-	return "", false, false
+	return "", false
 }
 
 // userFromToken returns the user corresponding to the OAuth token.
@@ -161,36 +152,14 @@ func (o *OAuth2) userFromToken(ctx context.Context, tokenSHA string, store DataS
 // If verification is successful returns an existing user object.
 // Returns nil if verification fails.
 func (o *OAuth2) Verify(req *http.Request, w http.ResponseWriter, store DataStore, sess SessionStore) (*user_model.User, error) {
-	token, legacyScheme, ok := parseToken(req)
+	token, ok := parseToken(req)
 	if !ok {
 		return nil, nil //nolint:nilnil // the auth method is not applicable
-	}
-	if legacyScheme {
-		if !setting.API.AllowLegacyTokenScheme {
-			return nil, ErrUserAuthMessage(legacyTokenSchemeDisabled)
-		}
-		if w != nil {
-			w.Header().Set("Deprecation", "true")
-			w.Header().Set("Sunset", legacyTokenSchemeSunset)
-			w.Header().Set("Warning", legacyTokenSchemeWarning)
-		}
 	}
 
 	user, err := o.userFromToken(req.Context(), token, store)
 	if err != nil && !errors.Is(err, util.ErrNotExist) {
 		log.Error("userFromToken: %v", err) // the callers might ignore the error, so log it here
 	}
-	if legacyScheme && user != nil {
-		warnLegacyTokenScheme(user)
-	}
 	return user, err
-}
-
-func warnLegacyTokenScheme(user *user_model.User) {
-	now := time.Now()
-	if last, ok := legacyTokenSchemeWarnedAt.Load(user.ID); ok && now.Sub(last.(time.Time)) < time.Minute {
-		return
-	}
-	legacyTokenSchemeWarnedAt.Store(user.ID, now)
-	log.Warn("User %s authenticated with the deprecated 'token' authorization scheme", user.Name)
 }
