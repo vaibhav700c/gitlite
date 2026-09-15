@@ -4,6 +4,14 @@ This changelog goes through the changes that have been made in each release
 without substantial changes to our git log; to see the highlights of what has
 been added to each release, please refer to the [blog](https://blog.gitea.com).
 
+## GitLite unreleased
+
+* BREAKING
+  * The `Authorization: token <token>` scheme is deprecated. Use `Authorization: Bearer <token>`. Requests that still use `token` succeed but receive `Deprecation: true`, `Sunset: Wed, 01 Apr 2026 00:00:00 GMT`, and a `Warning` header. Set `[api] ALLOW_LEGACY_TOKEN_SCHEME = false` to reject them with `401` (#1)
+  * List endpoints now return 20 items by default (was 30) and at most 25 per page (was 50), controlled by `[api] DEFAULT_PAGING_NUM` and `[api] MAX_RESPONSE_ITEMS` (#1)
+* ENHANCEMENTS
+  * Paginated list responses include `X-Page`, `X-PerPage`, and `X-HasMore` alongside `X-Total-Count` and `Link` (#1)
+
 ## [1.27.3](https://github.com/go-gitea/gitea/releases/tag/v1.27.3) - 2026-08-29
 
 * SECURITY
