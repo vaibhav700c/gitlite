@@ -13,9 +13,7 @@ import (
 	repo_model "gitea.dev/models/repo"
 	"gitea.dev/models/unittest"
 	user_model "gitea.dev/models/user"
-	"gitea.dev/modules/setting"
 	api "gitea.dev/modules/structs"
-	"gitea.dev/modules/test"
 	"gitea.dev/tests"
 
 	"github.com/stretchr/testify/assert"
@@ -80,10 +78,6 @@ func TestAPITopicSearch(t *testing.T) {
 
 func TestAPIRepoTopic(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
-	// expectations below predate the GitLite paging defaults (20 per page, at most 25)
-	defer test.MockVariableValue(&setting.API.DefaultPagingNum, 30)()
-	defer test.MockVariableValue(&setting.API.MaxResponseItems, 50)()
-
 	user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2}) // owner of repo2
 	org3 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 3})  // owner of repo3
 	user4 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 4}) // write access to repo 3
