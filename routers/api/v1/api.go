@@ -41,7 +41,7 @@
 //	     type: apiKey
 //	     name: Authorization
 //	     in: header
-//	     description: API tokens must be prepended with "Bearer" followed by a space. The "token" prefix is deprecated, returns Deprecation, Sunset and Warning response headers, and is rejected with 401 when ALLOW_LEGACY_TOKEN_SCHEME is false.
+//	     description: API tokens must be prepended with "token" followed by a space.
 //	SudoParam:
 //	     type: apiKey
 //	     name: sudo

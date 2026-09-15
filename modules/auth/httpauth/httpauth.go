@@ -15,8 +15,7 @@ type BasicAuth struct {
 }
 
 type BearerToken struct {
-	Token          string
-	IsLegacyScheme bool // sent as "token <sha>" instead of "Bearer <sha>"
+	Token string
 }
 
 type ParsedAuthorizationHeader struct {
@@ -41,7 +40,7 @@ func ParseAuthorizationHeader(header string) (ret ParsedAuthorizationHeader, _ b
 		ret.BasicAuth = &BasicAuth{Username: u, Password: p}
 		return ret, true
 	} else if util.AsciiEqualFold(parts[0], "token") || util.AsciiEqualFold(parts[0], "bearer") {
-		ret.BearerToken = &BearerToken{Token: parts[1], IsLegacyScheme: util.AsciiEqualFold(parts[0], "token")}
+		ret.BearerToken = &BearerToken{Token: parts[1]}
 		return ret, true
 	}
 	return ret, false
