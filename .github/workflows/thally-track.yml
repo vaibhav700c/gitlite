@@ -1,0 +1,49 @@
+name: Thally track dispatch
+
+on:
+  pull_request:
+    # closed → catches merges; labeled/synchronize/opened/reopened → catches
+    # docs-preview requests (matches the webhook path's preview actions).
+    types: [closed, labeled, synchronize, opened, reopened]
+    branches: [main]
+    paths:
+      - 'services/auth/**'
+      - 'modules/setting/**'
+      - 'modules/auth/**'
+      - 'services/context/**'
+      - 'routers/api/**'
+      - 'templates/swagger/**'
+      - 'custom/conf/**'
+
+jobs:
+  dispatch:
+    # Fire when the PR MERGED, or when it's an OPEN, docs-preview-labelled PR —
+    # but never for any Track-owned writer branch (loop guard).
+    if: >-
+      !startsWith(github.event.pull_request.head.ref, 'thally/agent-') &&
+      !startsWith(github.event.pull_request.head.ref, 'thally/track-vnext/') &&
+      (github.event.pull_request.merged == true ||
+       (github.event.action != 'closed' &&
+        contains(github.event.pull_request.labels.*.name, 'docs-preview')))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch docs task
+        env:
+          GH_TOKEN: ${{ secrets.THALLY_DISPATCH_TOKEN }}
+          THALLY_PR_URL: ${{ github.event.pull_request.html_url }}
+          THALLY_PR_NUMBER: ${{ github.event.pull_request.number }}
+          THALLY_REQUESTER: ${{ github.event.pull_request.user.login }}
+          THALLY_MERGED: ${{ github.event.pull_request.merged }}
+        run: |
+          if [ "$THALLY_MERGED" = "true" ]; then
+            INSTRUCTION="A pull request merged in vaibhav700c/gitlite (#${THALLY_PR_NUMBER}). Review it and decide what user-facing behavior it changes (API surface, config, CLI, defaults, behavior). Then find the documentation pages that describe that behavior and update them so the docs match — editing existing pages in place where they already cover it. Make no change if the PR has no user-facing impact."
+            PREVIEW=false
+          else
+            INSTRUCTION="An OPEN pull request in vaibhav700c/gitlite (#${THALLY_PR_NUMBER}) is up for review. Review it and decide what user-facing behavior it changes (API surface, config, CLI, defaults, behavior). Then find the documentation pages that describe that behavior and update them so the docs match — editing existing pages in place where they already cover it. This is a preview: the PR may still change before it merges, so draft the docs it will need for review alongside it."
+            PREVIEW=true
+          fi
+          gh api repos/vaibhav700c/gitlite-docs/dispatches -f event_type=thally-document \
+            -F "client_payload[instruction]=${INSTRUCTION}" \
+            -F "client_payload[from_pr]=${THALLY_PR_URL}" \
+            -F "client_payload[requester]=${THALLY_REQUESTER}" \
+            -F "client_payload[preview]=${PREVIEW}"
