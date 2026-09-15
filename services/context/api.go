@@ -234,7 +234,6 @@ func genAPILinks(curURL *url.URL, total int64, pageSize, curPage int) []string {
 }
 
 // SetLinkHeader sets pagination link header by given total number and page size.
-// It also sets X-Page, X-PerPage and X-HasMore; callers set X-Total-Count with SetTotalCountHeader.
 // "count" is usually from database result "count int64", so it also uses int64,
 func (ctx *APIContext) SetLinkHeader(total int64, pageSize int) {
 	links := genAPILinks(ctx.Req.URL, total, pageSize, ctx.FormInt("page"))
@@ -243,12 +242,6 @@ func (ctx *APIContext) SetLinkHeader(total int64, pageSize int) {
 		ctx.RespHeader().Set("Link", strings.Join(links, ","))
 		ctx.AppendAccessControlExposeHeaders("Link")
 	}
-
-	page := max(ctx.FormInt("page"), 1)
-	ctx.RespHeader().Set("X-Page", strconv.Itoa(page))
-	ctx.RespHeader().Set("X-PerPage", strconv.Itoa(pageSize))
-	ctx.RespHeader().Set("X-HasMore", strconv.FormatBool(pageSize > 0 && int64(page)*int64(pageSize) < total))
-	ctx.AppendAccessControlExposeHeaders("X-Page", "X-PerPage", "X-HasMore")
 }
 
 // APIContexter returns APIContext middleware
